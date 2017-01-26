@@ -15,10 +15,10 @@ class SecondViewController: UITableViewController {
     
     @IBOutlet var tblView: UITableView!
     
-
+    let myNotification = Notification.Name(rawValue:"MyNotification")
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
         
         self.tableView.register(UITableViewCell.self, forCellReuseIdentifier: "LabelCell" )
 
@@ -27,33 +27,90 @@ class SecondViewController: UITableViewController {
         loading["value"]="..."
         loading["unit"]="..."
 
-        weightData.append(loading)
-        heightData.append(loading)
+        if (weightData.count==0) {
+            weightData.append(loading)
+        }
+        if (heightData.count==0) {
+            heightData.append(loading)
+        }
+        
+        /*
+        //this part catch messages with new observations
+        let nc = NotificationCenter.default
+        nc.addObserver(forName: Notification.Name(rawValue:"MyNotification"), object: nil, queue: nil){
+            notification in
+            // Handle notification
+            print("Catch notification")
+            
+            guard let userInfo = notification.userInfo,
+                let data     = userInfo["data"]    as? Array<Dictionary<String, String>> else {
+                    print("No message found in notification")
+                    return
+            }
+            print(data)
+
+            DispatchQueue.main.async( execute: {
+                self.tblView?.reloadData()
+            })
+        }
+        */
 
     }
     
     override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        if (!animated) { getData() }
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-    
+
+    }
+
+ 
+    func getData(){
         let defaults = UserDefaults.standard
         let serverAddr = defaults.string(forKey: "FHIRserver")
         let patientID = defaults.string(forKey: "PatientID")
+        
+        //let nc = NotificationCenter.default
+
         
         let lastWeightObservationsUrl = serverAddr! + "/Observation?code=27113001&subject="+patientID!+"&_sort:desc=issued&_count=10"
         getObservations(urlString: lastWeightObservationsUrl, completion: {(result: Array<Dictionary<String, String>>)->Void in
             self.weightData.removeAll()
             self.weightData = result
-            self.tblView.reloadData()
+            DispatchQueue.main.async( execute: {
+                self.tblView?.reloadData()
+            })
+            
+            /*
+            nc.post(name:self.myNotification,
+                    object: nil,
+                    userInfo:["message":"New weight observations arrived!", "data":result])
+            */
         })
         
         let lastHeightObservationsUrl = serverAddr! + "/Observation?code=50373000&subject="+patientID!+"&_sort:desc=issued&_count=10"
         getObservations(urlString: lastHeightObservationsUrl, completion: {(result: Array<Dictionary<String, String>>)->Void in
             self.heightData.removeAll()
             self.heightData = result
-            self.tblView.reloadData()
-        })
         
+            DispatchQueue.main.async( execute: {
+                self.tblView?.reloadData()
+            })
+            
+            /*
+            nc.post(name:self.myNotification,
+                    object: nil,
+                    userInfo:["message":"New height observations arrived!", "data":result])
+            */
+
+        })
+    
     }
+    
     
     func getObservations(urlString: String, completion:@escaping (_ result : Array<Dictionary<String, String>>) -> Void){
         
@@ -117,92 +174,6 @@ class SecondViewController: UITableViewController {
         
     }
     
-/*
-    func getObservation(urlString: String, completion:@escaping (_ result : Dictionary<String, String>) -> Void){
-        
-        guard let url = URL(string: urlString) else {
-            print("Error: cannot create URL")
-            return //result
-        }
-        var urlRequest = URLRequest(url: url)//, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 5.0)
-        urlRequest.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Accept")
-        
-        // set up the session
-        let config = URLSessionConfiguration.default
-        let session = URLSession(configuration: config)
-        
-        // make the request
-        let task = session.dataTask(with: urlRequest, completionHandler: { (data, response, error) in
-            // do stuff with response, data & error here
-            guard error == nil else {
-                print("error calling GET request")
-                print(error!)
-                return
-            }
-            guard data != nil else {
-                print("Error: did not receive data")
-                return
-            }
-            do {
-                guard let bundle = try JSONSerialization.jsonObject(with: data!, options: []) as? [String: Any]
-                    else {
-                        print("error trying to convert data to JSON")
-                        return
-                }
-                //print(bundle.description)
-                
-                
-                guard let entries = bundle["entry"] as? [Any]
-                    else {
-                        print("Attrinute 'entry' not found in JSON")
-                        return
-                }
-                for entry in entries {
-                    
-                    if let observation = entry as? [String: Any] {
-                        var dict = Dictionary<String, String>()
-                        let id = observation["id"] as! String
-                        dict["id"] = id
-                        let observationResource = observation["resource"] as? [String: Any]
-                        for (key, value) in observationResource! {
-                            // access all key / value pairs in dictionary
-                            if(key=="issued") {
-                                dict["issued"] = value as? String
-                            }
-                            if(key=="valueQuantity") {
-                                let valueQuantity = observationResource?["valueQuantity"] as? [String: Any]
-                                for (key, value) in valueQuantity! {
-                                    //print("key = \(key), value = \(value)")
-                                    if(key=="value") {
-                                        let quantity : Double = value as! Double
-                                        dict["value"] = String(format:"%g", quantity)
-                                    }
-                                    if(key=="code") {
-                                        dict["unit"] = value as? String
-                                    }
-                                }
-                            }
-                        }
-                        completion(dict)
-                        
-                    } else {
-                        print("error converting entry to Observation object")
-                        return
-                    }
-                }
-                
-                
-            } catch  {
-                print("error trying to convert data to JSON")
-                return
-            }
-            
-        })
-        task.resume()
-        
-        
-    }
-*/
 
     //delegate methods
     func numberOfSections(tableView: UITableView) -> Int {
@@ -233,7 +204,6 @@ class SecondViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let reuseLabelIdentifier = "LabelCell"
-        
         //let cell = tblView.dequeueReusableCell(withIdentifier: reuseLabelIdentifier, for: indexPath ) as UITableViewCell
         
         let cell: UITableViewCell = UITableViewCell(style: UITableViewCellStyle.value1, reuseIdentifier: reuseLabelIdentifier)
@@ -252,22 +222,23 @@ class SecondViewController: UITableViewController {
         
         if(indexPath.section==0){
             //print(weightData[indexPath.row])
-            cell.detailTextLabel?.text = fmtDate(timestamp: weightData[indexPath.row]["issued"]!)
+            cell.detailTextLabel?.text = DateUtil.format(timestamp: weightData[indexPath.row]["issued"]!)
             cell.textLabel?.text = weightData[indexPath.row]["value"]! + " " + weightData[indexPath.row]["unit"]!
             
             return cell
         } else if (indexPath.section==1){
             //print(heightData[indexPath.row])
-            cell.detailTextLabel?.text = fmtDate(timestamp: heightData[indexPath.row]["issued"]!)
+            cell.detailTextLabel?.text = DateUtil.format(timestamp: heightData[indexPath.row]["issued"]!)
             cell.textLabel?.text = heightData[indexPath.row]["value"]! + " " + heightData[indexPath.row]["unit"]!
             return cell
         } else {
             cell.textLabel?.text = "N/A Section \(indexPath.section) Row \(indexPath.row)"
         }
+        
         return UITableViewCell()
     }
     
-
+/*
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .insert {
             //deletePlanetIndexPath = indexPath
@@ -276,6 +247,7 @@ class SecondViewController: UITableViewController {
             print("Row \(indexPath.row)  Style \(editingStyle.rawValue) ")
         }
     }
+ */
     /*
     override func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         var saveAction = UITableViewRowAction(style: .normal, title: "Save", handler: <#T##(UITableViewRowAction, IndexPath) -> Void#>){
@@ -284,38 +256,7 @@ class SecondViewController: UITableViewController {
     }
     */
     
-    func fmtDate(timestamp:String) -> String {
-        if #available(iOS 10.0, *) {
-            let ISOFormatter = ISO8601DateFormatter()
-            guard let date = ISOFormatter.date(from: timestamp)
-            else {
-                if timestamp.characters.count < 10 {
-                    return timestamp
-                }
-                let index = timestamp.index(timestamp.startIndex, offsetBy: 10)
-                return timestamp.substring(to: index)
-            }
-            
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "dd.MM.yy HH:mm"
-            return dateFormatter.string(from: date)
-        } else {
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ssZZZZZ"
-            guard let date = dateFormatter.date(from: timestamp.replacingOccurrences(of: "T", with: " ", options: .literal, range: nil))
-            else {
-                if timestamp.characters.count < 10 {
-                    return timestamp
-                }
-                let index = timestamp.index(timestamp.startIndex, offsetBy: 10)
-                return timestamp.substring(to: index)
-            }
-            
-            dateFormatter.dateFormat = "dd.MM.yy HH:mm"
-            return dateFormatter.string(from: date)
-        }
-        
-    }
+
     
 }
 

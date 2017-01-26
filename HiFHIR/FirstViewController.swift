@@ -330,6 +330,7 @@ class FirstViewController: UIViewController {
         dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZZZZZ"
         dateFormatter.timeZone = TimeZone(abbreviation: "EET")
         let timeStamp = dateFormatter.string(from: now)
+        let epoc : String = (floor(now.timeIntervalSince1970 * 1000)).description
         
         let defaults = UserDefaults.standard
         var FhirServer : String = defaults.string(forKey: "FHIRserver")!
@@ -361,15 +362,21 @@ class FirstViewController: UIViewController {
             snomedDescription = "Body height measure"
         }
         
+        //We don't want empty values (in case when Healthstore not available)
+        if(value=="0.0"||value=="0") {
+            return;
+        }
+        let deviceUID = UIDevice.current.identifierForVendor!.uuidString
+        
         var body = "{";
-        body += " \"resourceType\": \"Observation\", \"id\": \"\(observationType)-sample-IBO\", \"status\": \"final\", ";
+        body += " \"resourceType\": \"Observation\", \"id\": \"\(observationType)-\(deviceUID)-\(epoc)\", \"status\": \"final\", ";
         body += " \"code\": {\"coding\":[{\"system\": \"http://snomed.info/sct\", \"code\": \"\(snomedCode)\",\"display\":\"\(snomedDescription)\"}]}, ";
         body += " \"subject\": {\"reference\": \"\(patientID)\"}, ";
         body += " \"issued\": \"\(timeStamp)\", ";
         body += " \"valueQuantity\": {\"value\": \"\(value)\", \"unit\": \"\(unitLong)\", \"system\": \"http://unitsofmeasure.org\", \"code\": \"\(unitShort)\"}";
         body += "}";
         
-        let url = FhirServer + "/Observation/" + observationType + "-sample-IBO"
+        let url = FhirServer + "/Observation/" + observationType + "-" + deviceUID + "-" + epoc
         var request = URLRequest(url: URL(string: url)!)
         request.httpMethod = "PUT"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")

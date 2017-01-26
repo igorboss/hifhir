@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7816D8791E3A1846000F9E5E /* DateUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7816D8781E3A1846000F9E5E /* DateUtil.swift */; };
 		78541B0C1E0946AD0009A43A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78541B0B1E0946AD0009A43A /* AppDelegate.swift */; };
 		78541B0E1E0946AD0009A43A /* FirstViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78541B0D1E0946AD0009A43A /* FirstViewController.swift */; };
 		78541B101E0946AD0009A43A /* SecondViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78541B0F1E0946AD0009A43A /* SecondViewController.swift */; };
@@ -31,6 +32,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		7816D8781E3A1846000F9E5E /* DateUtil.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DateUtil.swift; sourceTree = "<group>"; };
 		78541B081E0946AD0009A43A /* HiFHIR.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HiFHIR.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		78541B0B1E0946AD0009A43A /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		78541B0D1E0946AD0009A43A /* FirstViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstViewController.swift; sourceTree = "<group>"; };
@@ -101,6 +103,7 @@
 				78541B191E0946AD0009A43A /* Info.plist */,
 				78C021751E0BC27300C3F02A /* HKHealthStoreExtension.swift */,
 				785F17011E281A3700C97D2D /* RESTController.swift */,
+				7816D8781E3A1846000F9E5E /* DateUtil.swift */,
 			);
 			name = Source;
 			path = HiFHIR;
@@ -240,6 +243,7 @@
 				78C021741E0A671E00C3F02A /* ThirdViewController.swift in Sources */,
 				78541B0E1E0946AD0009A43A /* FirstViewController.swift in Sources */,
 				785F17021E281A3700C97D2D /* RESTController.swift in Sources */,
+				7816D8791E3A1846000F9E5E /* DateUtil.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
